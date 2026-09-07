@@ -1,104 +1,137 @@
-import { useState } from 'preact/hooks'
-import heroImg from './assets/hero.png'
-import preactLogo from './assets/preact.svg'
-import viteLogo from './assets/vite.svg'
-import './app.css'
+import { useState } from "react";
 
-export function App() {
-  const [count, setCount] = useState(0)
+function App() {
+  const [message, setMessage] = useState("");
+  const [questions, setQuestions] = useState([]);
+  const [answers, setAnswers] = useState([]);
+  const[evaluations, setEvaluation] = useState([]);
+  
+  const handleAnswerChange = (index, answer) => {
+  const updatedAnswers = [...answers];
+  updatedAnswers[index] = answer;
 
+  setAnswers(updatedAnswers);
+};
+
+  const connectBackend = async () => {
+    const response = await fetch("http://127.0.0.1:8000/");
+    const data = await response.json();
+
+    setMessage(data.message);
+  };
+  const generateQuestions = async () => {
+    const response = await fetch("http://127.0.0.1:8000/generate-ai-questions");
+    const data = await response.json();
+
+    setQuestions(data.questions);
+  };
+
+  const submitAnswers = async () => {
+  const response = await fetch("http://127.0.0.1:8000/evaluate-answers", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      questions: questions,
+      answers: answers,
+    }),
+  });
+
+  const data = await response.json();
+
+  console.log(data);
+
+  setEvaluation(data.evaluations);
+};
   return (
-    <>
-      <section id="center">
-        <div class="hero">
-          <img src={heroImg} class="base" width="170" height="179" alt="" />
-          <img src={preactLogo} class="framework" alt="Preact logo" />
-          <img src={viteLogo} class="vite" alt="Vite logo" />
-        </div>
-        <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/app.jsx</code> and save to test <code>HMR</code>
-          </p>
-        </div>
-        <button
-          type="button"
-          class="counter"
-          onClick={() => setCount((count) => count + 1)}
-        >
-          Count is {count}
-        </button>
-      </section>
+    <div>
+      <h1>Knowledge Gap AI</h1>
 
-      <div class="ticks"></div>
+      <button onClick={connectBackend}>
+        Connect to Backend
+      </button>
 
-      <section id="next-steps">
-        <div id="docs">
-          <svg class="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img class="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://preactjs.com/" target="_blank">
-                <img class="button-icon" src={preactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
-        </div>
-        <div id="social">
-          <svg class="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg class="button-icon" role="presentation" aria-hidden="true">
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg class="button-icon" role="presentation" aria-hidden="true">
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg class="button-icon" role="presentation" aria-hidden="true">
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg class="button-icon" role="presentation" aria-hidden="true">
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
+      <button onClick={generateQuestions}>Generate Question</button>
 
-      <div class="ticks"></div>
-      <section id="spacer"></section>
-    </>
-  )
+      <p>{message}</p>
+
+      <div>
+  {questions.map((question, index) => (
+    <div key={index}>
+      <p>
+       {index + 1}. {question.question}
+      </p>
+
+      <textarea
+        placeholder="Type your answer here..."
+        value={answers[index] || ""}
+        onChange={(e) =>
+          handleAnswerChange(index, e.target.value)
+         }
+        />
+       </div>
+      ))}
+      </div>
+
+      <div>
+  
+</div>
+
+{questions.length > 0 && (
+  <button onClick={submitAnswers}>
+    Submit Answers
+  </button>
+)}
+
+{evaluations.length > 0 && (
+  <div>
+    <h2>Evaluation Results</h2>
+
+    {evaluations.map((evaluation, index) => (
+      <div key={index}>
+        <h3>Question {index + 1}</h3>
+
+        <p>
+          <strong>Score:</strong> {evaluation.score}/100
+        </p>
+
+        <p>
+          <strong>Understanding:</strong> {evaluation.understanding}
+        </p>
+
+        <p>
+          <strong>Demonstrated Concepts:</strong>
+          {" "}
+          {evaluation.demonstrated_concepts.join(", ")}
+        </p>
+
+        <p>
+          <strong>Missing Concepts:</strong>
+          {" "}
+          {evaluation.missing_concepts.join(", ")}
+        </p>
+
+        <p>
+          <strong>Misconceptions:</strong>
+          {" "}
+          {evaluation.misconceptions.length > 0
+            ? evaluation.misconceptions.join(", ")
+            : "None"}
+        </p>
+
+        <p>
+          <strong>Explanation:</strong> {evaluation.explanation}
+        </p>
+
+        <hr />
+      </div>
+    ))}
+  </div>
+)}
+
+    </div>
+  );
 }
+
+export default App;
