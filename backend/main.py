@@ -1,4 +1,4 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, UploadFile, File
 from fastapi.middleware.cors import CORSMiddleware
 from dotenv import load_dotenv
 from google import genai
@@ -144,3 +144,10 @@ def evaluate_answers(data: EvaluationRequest):
 
     return result
 
+@app.post("/upload-file")
+async def upload_file(file: UploadFile = File(...)):
+    return {
+        "message": "File uploaded successfully",
+        "filename": file.filename,
+        "content_type": file.content_type
+    }

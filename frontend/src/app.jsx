@@ -4,7 +4,8 @@ function App() {
   const [message, setMessage] = useState("");
   const [questions, setQuestions] = useState([]);
   const [answers, setAnswers] = useState([]);
-  const[evaluations, setEvaluation] = useState([]);
+  const[evaluations, setEvaluations] = useState([]);
+  const[selectedFile, setSelectedFile] = useState(null);
   
   const handleAnswerChange = (index, answer) => {
   const updatedAnswers = [...answers];
@@ -44,6 +45,27 @@ function App() {
 
   setEvaluation(data.evaluations);
 };
+
+const uploadFile = async () => {
+  if (!selectedFile) {
+    alert("Please select a file first.");
+    return;
+  }
+
+  const formData = new FormData();
+  formData.append("file", selectedFile);
+
+  const response = await fetch("http://127.0.0.1:8000/upload-file", {
+    method: "POST",
+    body: formData,
+  });
+
+  const data = await response.json();
+
+  console.log(data);
+};
+
+
   return (
     <div>
       <h1>Knowledge Gap AI</h1>
@@ -55,6 +77,23 @@ function App() {
       <button onClick={generateQuestions}>Generate Question</button>
 
       <p>{message}</p>
+
+      <div>
+        <h2>Upload Study Material </h2>
+
+        <input 
+        type = "file"
+        onChange={(e) => setSelectedFile(e.target.files[0])}
+        />
+
+        <p>
+          {selectedFile 
+          ? `Selected file: ${selectedFile.name}`
+          : "No file selected"}
+        </p>
+
+        <button onClick={uploadFile}>Upload File</button>
+      </div>
 
       <div>
   {questions.map((question, index) => (
